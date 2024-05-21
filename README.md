@@ -1,5 +1,5 @@
 ```gcc main.c -o main```
 
-./main
+```./main```
 
 FCFS Algorithm 
