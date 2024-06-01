@@ -35,14 +35,14 @@ void calculateFCFS(int n, int at[], int bt[]) {
     printf("Average Waiting Time: %.2f\n", total_wt / n);
 }
 void calculateSJF(int n, int at[], int bt[]) {
-    int ct[4]; //completion time
-    int Tt[4]; //turnaround time
-    int wt[4]; //waiting time
-    int completed[4] = {0}; //track if a process is completed
+    int ct[4]; // completion time
+    int Tt[4]; // turnaround time
+    int wt[4]; // waiting time
+    int completed[4] = {0}; // track if a process is completed
 
     int current_time = 0;
-    float total_Tt = 0; //total turnaround time
-    float total_wt = 0; //total waiting time
+    float total_Tt = 0; // total turnaround time
+    float total_wt = 0; // total waiting time
 
     printf("+--------+--------+-------+-----------+-----------+--------+\n");
     printf("| Process| Arrival| Burst | Completion| Turnaround| Waiting|\n");
@@ -52,7 +52,8 @@ void calculateSJF(int n, int at[], int bt[]) {
         int shortest = -1;
         for (int i = 0; i < n; i++) {
             if (at[i] <= current_time && !completed[i]) {
-                if (shortest == -1 || bt[i] < bt[shortest]) {
+                //if next CPU burst are same select the process with the smallest arrival time
+                if (shortest == -1 || bt[i] < bt[shortest] || (bt[i] == bt[shortest] && at[i] < at[shortest])) {
                     shortest = i;
                 }
             }
@@ -68,10 +69,13 @@ void calculateSJF(int n, int at[], int bt[]) {
         completed[i] = 1;
 
         printf("| P%-6d| %-7d| %-6d|", i + 1, at[i], bt[i]);
+        
         ct[i] = current_time + bt[i];
         Tt[i] = ct[i] - at[i];
         wt[i] = Tt[i] - bt[i];
+        //total turnaround time
         total_Tt += Tt[i];
+        //total waiting time
         total_wt += wt[i];
         printf(" %-10d| %-10d| %-7d|\n", ct[i], Tt[i], wt[i]);
         current_time = ct[i];
@@ -83,20 +87,22 @@ void calculateSJF(int n, int at[], int bt[]) {
     printf("Average Waiting Time: %.2f\n", total_wt / n);
 }
 void calculateRR(int n, int at[], int bt[], int quantum) {
-    int remaining_bt[4];
-    int ct[4]; //completion time
-    int Tt[4]; //turnaround time
-    int wt[4]; //waiting time
+    int remaining_bt[4];  // array to keep track of remaining burst times for each process
+    int ct[4];  // array to store completion time for each process
+    int Tt[4];  // array to store turnaround time for each process
+    int wt[4];  // array to store waiting time for each process
 
+    // Initialize remaining burst times
     for (int i = 0; i < n; i++) {
         remaining_bt[i] = bt[i];
     }
 
-    int current_time = 0;
-    float total_Tt = 0; //total turnaround time
-    float total_wt = 0; //total waiting time
-    bool done;
+    int current_time = 0;  // current time in the scheduling simulation
+    float total_Tt = 0;  // total turnaround time for all processes
+    float total_wt = 0;  // total waiting time for all processes
+    bool done;  // flag to check if all processes are done
 
+    // Print table headers
     printf("+--------+--------+-------+-----------+-----------+--------+\n");
     printf("| Process| Arrival| Burst | Completion| Turnaround| Waiting|\n");
     printf("+--------+--------+-------+-----------+-----------+--------+\n");
@@ -109,17 +115,20 @@ void calculateRR(int n, int at[], int bt[], int quantum) {
                 done = false;
 
                 if (remaining_bt[i] > quantum) {
-                    current_time += quantum;
-                    remaining_bt[i] -= quantum;
+                    // Process has more burst time than the quantum
+                    current_time += quantum;  // Increment current time by quantum
+                    remaining_bt[i] -= quantum;  // Decrease remaining burst time
                 } else {
-                    current_time += remaining_bt[i];
-                    ct[i] = current_time;
-                    Tt[i] = ct[i] - at[i];
-                    wt[i] = Tt[i] - bt[i];
-                    total_Tt += Tt[i];
-                    total_wt += wt[i];
-                    remaining_bt[i] = 0;
+                    // Process has burst time less than or equal to quantum
+                    current_time += remaining_bt[i];  // Increment current time by remaining burst time
+                    ct[i] = current_time;  // Set completion time for process i
+                    Tt[i] = ct[i] - at[i];  // Calculate turnaround time for process i
+                    wt[i] = Tt[i] - bt[i];  // Calculate waiting time for process i
+                    total_Tt += Tt[i];  // Accumulate total turnaround time
+                    total_wt += wt[i];  // Accumulate total waiting time
+                    remaining_bt[i] = 0;  // Process i is now done
 
+                    // Print process information
                     printf("| P%-6d| %-7d| %-6d| %-10d| %-10d| %-7d|\n", i + 1, at[i], bt[i], ct[i], Tt[i], wt[i]);
                 }
             }
@@ -130,8 +139,10 @@ void calculateRR(int n, int at[], int bt[], int quantum) {
         }
     }
 
+    // Print table footer
     printf("+--------+--------+-------+-----------+-----------+--------+\n");
 
+    // Print average turnaround time and waiting time
     printf("Average Turnaround Time: %.2f\n", total_Tt / n);
     printf("Average Waiting Time: %.2f\n", total_wt / n);
 }
@@ -141,7 +152,7 @@ int main() {
     int n = 4;
     int at[] = {0, 6, 7, 9}; //arrival time
     int bt[] = {10, 8, 4, 5}; //burst time
-    int quantum = 3;
+    int quantum = 4;
     
     // int gantt_ct[100] = {0}; 
     // int index = 0;
