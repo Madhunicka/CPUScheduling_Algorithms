@@ -91,6 +91,9 @@ void calculateRR(int n, int at[], int bt[], int quantum) {
     int ct[4];  // array to store completion time for each process
     int Tt[4];  // array to store turnaround time for each process
     int wt[4];  // array to store waiting time for each process
+    int queue[4];  // queue to maintain the order of process execution
+    int front = 0, rear = 0;  // queue pointers
+    int process_count = 0;
 
     // Initialize remaining burst times
     for (int i = 0; i < n; i++) {
@@ -100,26 +103,38 @@ void calculateRR(int n, int at[], int bt[], int quantum) {
     int current_time = 0;  // current time in the scheduling simulation
     float total_Tt = 0;  // total turnaround time for all processes
     float total_wt = 0;  // total waiting time for all processes
-    bool done;  // flag to check if all processes are done
+
+    // Add processes to the queue based on arrival times
+    for (int i = 0; i < n; i++) {
+        if (at[i] <= current_time) {
+            queue[rear++] = i;
+        }
+    }
 
     // Print table headers
     printf("+--------+--------+-------+-----------+-----------+--------+\n");
     printf("| Process| Arrival| Burst | Completion| Turnaround| Waiting|\n");
     printf("+--------+--------+-------+-----------+-----------+--------+\n");
 
-    while (1) {
-        done = true;
+    while (process_count < n) {
+        if (front != rear) {
+            int i = queue[front++ % n];
 
-        for (int i = 0; i < n; i++) {
             if (remaining_bt[i] > 0) {
-                done = false;
-
                 if (remaining_bt[i] > quantum) {
-                    // Process has more burst time than the quantum
                     current_time += quantum;  // Increment current time by quantum
                     remaining_bt[i] -= quantum;  // Decrease remaining burst time
+
+                    // Add newly arrived processes to the queue
+                    for (int j = 0; j < n; j++) {
+                        if (at[j] > current_time - quantum && at[j] <= current_time && remaining_bt[j] > 0) {
+                            queue[rear++ % n] = j;
+                        }
+                    }
+
+                    // Re-add the current process to the queue if it's not completed
+                    queue[rear++ % n] = i;
                 } else {
-                    // Process has burst time less than or equal to quantum
                     current_time += remaining_bt[i];  // Increment current time by remaining burst time
                     ct[i] = current_time;  // Set completion time for process i
                     Tt[i] = ct[i] - at[i];  // Calculate turnaround time for process i
@@ -127,15 +142,14 @@ void calculateRR(int n, int at[], int bt[], int quantum) {
                     total_Tt += Tt[i];  // Accumulate total turnaround time
                     total_wt += wt[i];  // Accumulate total waiting time
                     remaining_bt[i] = 0;  // Process i is now done
+                    process_count++;  // Increment the number of completed processes
 
                     // Print process information
                     printf("| P%-6d| %-7d| %-6d| %-10d| %-10d| %-7d|\n", i + 1, at[i], bt[i], ct[i], Tt[i], wt[i]);
                 }
             }
-        }
-
-        if (done) {
-            break;
+        } else {
+            current_time++;
         }
     }
 
